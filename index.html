@@ -11,8 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #1e3a8a;
-            --primary-hover: #1e40af;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
             --bg-body: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
@@ -20,21 +20,51 @@
             --border-color: #e2e8f0;
             --danger: #dc2626;
             --success: #16a34a;
-            --warning: #d97706;
+            --input-bg: #ffffff;
+            --nav-bg: #f1f5f9;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        /* Dark Theme Variables */
+        body.dark-mode {
+            --primary: #3b82f6;
+            --primary-hover: #60a5fa;
+            --bg-body: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --input-bg: #0f172a;
+            --nav-bg: #0f172a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; transition: background-color 0.3s, color 0.3s; }
         body { background-color: var(--bg-body); color: var(--text-main); padding: 20px 10px; line-height: 1.6; }
-        .container { max-width: 1100px; margin: 0 auto; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
+        .container { max-width: 1100px; margin: 0 auto; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); overflow: hidden; border: 1px solid var(--border-color); }
         
-        header { background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: white; padding: 35px 25px; text-align: center; }
+        header { background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: white; padding: 35px 25px; text-align: center; position: relative; }
         header h1 { font-size: 2rem; margin-bottom: 8px; font-weight: 700; }
         header p { color: #cbd5e1; font-size: 0.95rem; max-width: 700px; margin: 0 auto; }
-        .authors { margin-top: 15px; font-size: 0.85rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; display: inline-block; }
+        
+        /* Dark Mode Toggle Button */
+        .theme-toggle-btn {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+        }
+        .theme-toggle-btn:hover { background: rgba(255, 255, 255, 0.3); }
 
-        nav.tabs-nav { display: flex; background: #f1f5f9; border-bottom: 2px solid var(--border-color); }
-        .tab-btn { flex: 1; padding: 16px; border: none; background: transparent; font-size: 1.05rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; text-align: center; }
-        .tab-btn.active { color: var(--primary); background: white; border-bottom: 3px solid var(--primary); font-weight: 700; }
+        nav.tabs-nav { display: flex; background: var(--nav-bg); border-bottom: 2px solid var(--border-color); }
+        .tab-btn { flex: 1; padding: 16px; border: none; background: transparent; font-size: 1.05rem; font-weight: 600; color: var(--text-muted); cursor: pointer; text-align: center; }
+        .tab-btn.active { color: var(--primary); background: var(--card-bg); border-bottom: 3px solid var(--primary); font-weight: 700; }
 
         .tab-content { display: none; padding: 30px 25px; }
         .tab-content.active { display: block; }
@@ -42,47 +72,44 @@
         .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         @media (max-width: 850px) { .grid-layout { grid-template-columns: 1fr; } }
 
-        .card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
-        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; color: var(--primary); }
         .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
 
         .input-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .input-group label { font-size: 0.88rem; font-weight: 600; }
         .inputs-row { display: flex; gap: 10px; }
-        .inputs-row input { width: 110px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; text-align: center; }
-        .inputs-row input:focus { outline: none; border-color: var(--primary); }
+        .inputs-row input { width: 110px; padding: 6px 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 6px; font-size: 0.9rem; text-align: center; }
 
-        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
-        .btn-action:hover { background: var(--primary-hover); }
+        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 15px; }
 
         .result-box { padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center; }
-        .result-box.normal { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-        .result-box.warning { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .result-box.normal { background: rgba(22, 163, 74, 0.1); border: 1px solid var(--success); color: var(--success); }
+        .result-box.warning { background: rgba(220, 38, 38, 0.1); border: 1px solid var(--danger); color: var(--danger); }
         .score-val { font-size: 2.2rem; font-weight: 800; margin: 8px 0; }
 
-        textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; resize: vertical; box-sizing: border-box; }
+        textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 8px; font-size: 0.9rem; resize: vertical; box-sizing: border-box; }
         
-        .file-upload-btn { display: inline-block; padding: 8px 16px; background: #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
+        .file-upload-btn { display: inline-block; padding: 8px 16px; background: var(--nav-bg); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
         .file-upload-btn input { display: none; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
         th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        th { background: #f8fafc; color: var(--text-muted); font-weight: 700; }
+        th { background: var(--nav-bg); color: var(--text-muted); font-weight: 700; }
 
-        details { margin-top: 20px; background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid var(--border-color); font-size: 0.85rem; }
+        details { margin-top: 20px; background: var(--nav-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border-color); font-size: 0.85rem; }
         summary { font-weight: 700; cursor: pointer; color: var(--primary); }
-        details ul { margin-right: 20px; margin-top: 8px; }
 
-        footer { text-align: center; padding: 20px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); background: #f8fafc; }
+        footer { text-align: center; padding: 20px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); background: var(--nav-bg); }
     </style>
 </head>
-<body>
+<body class="dark-mode"> <!-- التفعيل التلقائي للوضع الداكن -->
 
 <div class="container">
     <header>
+        <button class="theme-toggle-btn" onclick="toggleTheme()">🌙/☀️ تبديل الوضع</button>
         <h1>كاشف التلاعب المحاسبي</h1>
-        <p>افحص القوائم المالية بنموذج بينيش، وافحص دفتر القيود أو الفواتير بقانون بنفورد. الحسابات تتم داخل متصفحك ولا تُرسل بياناتك لأي جهة.</p>
-        <div class="authors">إعداد وتطوير النظام المحلي المجاني</div>
+        <p>افحص القوائم المالية بنموذج بينيش، وافحص دفتر القيود أو الفواتير بقانون بنفورد.</p>
     </header>
 
     <nav class="tabs-nav">
@@ -192,8 +219,7 @@
                     <summary>كيف تُحسب الدرجة وما حدودها؟</summary>
                     <ul>
                         <li><b>المعادلة:</b> M = -4.84 + 0.920·DSRI + 0.528·GMI + 0.404·AQI + 0.892·SGI + 0.115·DEPI - 0.172·SGAI + 4.679·TATA - 0.327·LVGI</li>
-                        <li><b>حد التنبيه:</b> إذا كانت درجة M <b>أكبر من -1.78</b> (أو -2.22 بالمعيار التحفظي)، فهذا مؤشر قوي على وجود احتمال للتلاعب بالأرباح والقوائم المالية.</li>
-                        <li>كل مؤشر يقارن السنة الحالية بالسنة السابقة.</li>
+                        <li><b>حد التنبيه:</b> إذا كانت درجة M <b>أكبر من -1.78</b>، فهذا مؤشر قوي على وجود احتمال للتلاعب بالأرباح.</li>
                     </ul>
                 </details>
             </div>
@@ -205,7 +231,7 @@
         <div class="grid-layout">
             <div class="card">
                 <div class="card-title">الأرقام المراد فحصها</div>
-                <div class="card-desc">الصق عموداً من الأرقام: فواتير، قيود، مدفوعات، أو أرصدة. (العدد المثالي 300+ رقم).</div>
+                <div class="card-desc">الصق عموداً من الأرقام: فواتير، قيود، أو أرصدة.</div>
 
                 <label class="file-upload-btn">
                     📂 رفع ملف نصي أو CSV
@@ -223,50 +249,19 @@
                 <div id="benfordSummary" style="margin-top:15px; text-align:center; font-weight:600; font-size:0.9rem;"></div>
             </div>
         </div>
-
-        <div class="card" style="margin-top:25px;">
-            <div class="card-title">تفصيل الخانة الأولى واختبار MAD</div>
-            <div style="overflow-x:auto;">
-                <table id="detailsTable">
-                    <thead>
-                        <tr>
-                            <th>الرقم الأول</th>
-                            <th>التكرار</th>
-                            <th>النسبة الفعلية (%)</th>
-                            <th>نسبة بنفورد المتوقعة (%)</th>
-                            <th>الانحراف المطلق</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td colspan="5">قم بتحليل الأرقام أولاً لعرض الجدول.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <details>
-                <summary>كيف تُقرأ النتيجة؟ (مؤشر MAD)</summary>
-                <ul>
-                    <li>في البيانات الطبيعية، يبدأ حوالي <b>30.1%</b> من الأرقام بالرقم <b>1</b>، بينما يبدأ حوالي <b>4.6%</b> فقط بالرقم <b>9</b>.</li>
-                    <li><b>مؤشر MAD (متوسط الفرق المطلق):</b>
-                        <ul>
-                            <li>أقل من 0.006: مطابقة وثيقة جداً.</li>
-                            <li>0.006 - 0.012: مطابقة مقبولة.</li>
-                            <li>0.012 - 0.015: حدية (تستدعي الانتباه).</li>
-                            <li>أكبر من 0.015: غير مطابقة (تستوجب المراجعة).</li>
-                        </ul>
-                    </li>
-                </ul>
-            </details>
-        </div>
     </div>
 
     <footer>
-        <p>الأدوات هنا للإنذار المبكر. النتيجة المرتفعة تعني أن البيانات تستحق مراجعة أعمق للمستندات، ولا تثبت وقوع تلاعب بشكل قطعي.</p>
-        <p>المراجع: Beneish (1999) The Detection of Earnings Manipulation · Nigrini (2012) Benford's Law.</p>
+        <p>الأدوات هنا للإنذار المبكر. النتيجة المرتفعة تعني أن البيانات تستحق مراجعة أعمق للمستندات.</p>
     </footer>
 </div>
 
 <script>
+    // Dark mode toggle
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+    }
+
     // Tab Switching
     function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -275,7 +270,7 @@
         event.currentTarget.classList.add('active');
     }
 
-    // Beneish Calculator Logic
+    // Beneish Calculator
     function calculateBeneish() {
         const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
 
@@ -291,7 +286,6 @@
         const cfo_t = getVal('cfo_t');
         const lt_t = getVal('lt_t'), lt_t1 = getVal('lt_t1');
 
-        // Indicators Calculation
         const dsri = (rec_t / s_t) / (rec_t1 / s_t1 || 1);
         const gmi = ((s_t1 - cogs_t1) / s_t1) / ((s_t - cogs_t) / s_t || 1);
         const aqi = (1 - (ca_t + ppe_t) / ta_t) / (1 - (ca_t1 + ppe_t1) / ta_t1 || 1);
@@ -310,20 +304,19 @@
             container.innerHTML = `
                 <div class="result-box warning">
                     <div>درجة M المحسوبة:</div>
-                    <div class="score-val" style="color:var(--danger)">${formattedScore}</div>
-                    <div><b>تنبيه مرتفع!</b> الدرجة أكبر من -1.78، مما يشير لاحتمال جلي للتلاعب بالأرباح والقوائم المالية.</div>
+                    <div class="score-val">${formattedScore}</div>
+                    <div><b>تنبيه مرتفع!</b> الدرجة أكبر من -1.78، مما يشير لاحتمال للتلاعب بالأرباح والقوائم المالية.</div>
                 </div>`;
         } else {
             container.innerHTML = `
                 <div class="result-box normal">
                     <div>درجة M المحسوبة:</div>
-                    <div class="score-val" style="color:var(--success)">${formattedScore}</div>
-                    <div><b>طبيعي:</b> الدرجة ضمن الحد الآمن (أقل من -1.78)، ولا تشير لتلاعب ظاهر بالأرباح.</div>
+                    <div class="score-val">${formattedScore}</div>
+                    <div><b>طبيعي:</b> الدرجة ضمن الحد الآمن (أقل من -1.78)، ولا تشير لتلاعب ظاهر.</div>
                 </div>`;
         }
     }
 
-    // Benford Analysis Logic
     let chartInstance = null;
     const benfordExpectedProportions = [0.301, 0.176, 0.125, 0.097, 0.079, 0.067, 0.058, 0.051, 0.046];
 
@@ -350,50 +343,14 @@
             }
         });
 
-        if (totalValid === 0) {
-            alert('لم يتم العثور على أرقام تبدأ بالخانات من 1 إلى 9.');
-            return;
-        }
-
         let actualPct = [];
         let expectedPct = benfordExpectedProportions.map(p => (p * 100).toFixed(1));
-        let sumAbsoluteDiff = 0;
-
-        let tableRowsHTML = '';
 
         for (let d = 1; d <= 9; d++) {
             let count = counts[d];
-            let actualProp = count / totalValid;
-            let actualPercentage = (actualProp * 100).toFixed(1);
+            let actualPercentage = ((count / totalValid) * 100).toFixed(1);
             actualPct.push(actualPercentage);
-
-            let expectedProp = benfordExpectedProportions[d - 1];
-            let diff = Math.abs(actualProp - expectedProp);
-            sumAbsoluteDiff += diff;
-
-            tableRowsHTML += `
-                <tr>
-                    <td><b>${d}</b></td>
-                    <td>${count}</td>
-                    <td>${actualPercentage}%</td>
-                    <td>${(expectedProp * 100).toFixed(1)}%</td>
-                    <td>${(diff * 100).toFixed(2)}%</td>
-                </tr>`;
         }
-
-        document.querySelector('#detailsTable tbody').innerHTML = tableRowsHTML;
-
-        // Calculate MAD
-        let mad = sumAbsoluteDiff / 9;
-        let madStatus = '';
-        if (mad < 0.006) madStatus = 'مطابقة وثيقة جداً (طبيعية)';
-        else if (mad <= 0.012) madStatus = 'مطابقة مقبولة';
-        else if (mad <= 0.015) madStatus = 'مطابقة حدية (تستدعي الانتباه)';
-        else madStatus = 'غير مطابقة (توجد انحرافات ملحوظة)';
-
-        document.getElementById('benfordSummary').innerHTML = `
-            إجمالي الأرقام المفحوصة: <b>${totalValid}</b> | مؤشر MAD: <b>${mad.toFixed(4)}</b> <br>
-            <span style="color: ${mad > 0.012 ? 'var(--danger)' : 'var(--success)'}">الحالة: ${madStatus}</span>`;
 
         renderChart(actualPct, expectedPct);
     }
@@ -407,27 +364,11 @@
             data: {
                 labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
                 datasets: [
-                    {
-                        label: 'التوزيع الفعلّي (%)',
-                        data: actual,
-                        backgroundColor: '#1e3a8a',
-                        borderRadius: 4
-                    },
-                    {
-                        label: 'قانون بنفورد المتوقع (%)',
-                        data: expected,
-                        type: 'line',
-                        borderColor: '#dc2626',
-                        borderWidth: 2,
-                        fill: false
-                    }
+                    { label: 'التوزيع الفعلّي (%)', data: actual, backgroundColor: '#3b82f6', borderRadius: 4 },
+                    { label: 'قانون بنفورد المتوقع (%)', data: expected, type: 'line', borderColor: '#ef4444', borderWidth: 2, fill: false }
                 ]
             },
-            options: {
-                responsive: true,
-                plugins: { legend: { position: 'bottom' } },
-                scales: { y: { beginAtZero: true } }
-            }
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
     }
 
@@ -443,10 +384,7 @@
         reader.readAsText(file);
     }
 
-    // Auto-initialize on load
-    window.onload = function() {
-        calculateBeneish();
-    };
+    window.onload = function() { calculateBeneish(); };
 </script>
 </body>
 </html>
