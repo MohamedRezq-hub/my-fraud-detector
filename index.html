@@ -3,84 +3,402 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>كاشف التلاعب المحاسبي</title>
+    <title>كاشف التلاعب المحاسبي | LedgerLens</title>
+    <!-- Google Fonts & Chart.js -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        h1 { text-align: center; color: #1e293b; }
-        p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
-        .tab-btn.active { background: #2563eb; color: white; }
-        .tab-content { display: none; }
+        :root {
+            --primary: #1e3a8a;
+            --primary-hover: #1e40af;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --warning: #d97706;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); padding: 20px 10px; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid var(--border-color); }
+        
+        header { background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: white; padding: 35px 25px; text-align: center; }
+        header h1 { font-size: 2rem; margin-bottom: 8px; font-weight: 700; }
+        header p { color: #cbd5e1; font-size: 0.95rem; max-width: 700px; margin: 0 auto; }
+        .authors { margin-top: 15px; font-size: 0.85rem; color: #94a3b8; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; display: inline-block; }
+
+        nav.tabs-nav { display: flex; background: #f1f5f9; border-bottom: 2px solid var(--border-color); }
+        .tab-btn { flex: 1; padding: 16px; border: none; background: transparent; font-size: 1.05rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; text-align: center; }
+        .tab-btn.active { color: var(--primary); background: white; border-bottom: 3px solid var(--primary); font-weight: 700; }
+
+        .tab-content { display: none; padding: 30px 25px; }
         .tab-content.active { display: block; }
-        textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
-        button.action-btn { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button.action-btn:hover { background: #059669; }
-        .result-box { margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+
+        .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        @media (max-width: 850px) { .grid-layout { grid-template-columns: 1fr; } }
+
+        .card { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; }
+        .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .card-desc { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px; }
+
+        .input-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .input-group label { font-size: 0.88rem; font-weight: 600; }
+        .inputs-row { display: flex; gap: 10px; }
+        .inputs-row input { width: 110px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; text-align: center; }
+        .inputs-row input:focus { outline: none; border-color: var(--primary); }
+
+        .btn-action { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
+        .btn-action:hover { background: var(--primary-hover); }
+
+        .result-box { padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center; }
+        .result-box.normal { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .result-box.warning { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .score-val { font-size: 2.2rem; font-weight: 800; margin: 8px 0; }
+
+        textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; resize: vertical; box-sizing: border-box; }
+        
+        .file-upload-btn { display: inline-block; padding: 8px 16px; background: #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; margin-bottom: 12px; }
+        .file-upload-btn input { display: none; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        th { background: #f8fafc; color: var(--text-muted); font-weight: 700; }
+
+        details { margin-top: 20px; background: #f8fafc; border-radius: 8px; padding: 12px; border: 1px solid var(--border-color); font-size: 0.85rem; }
+        summary { font-weight: 700; cursor: pointer; color: var(--primary); }
+        details ul { margin-right: 20px; margin-top: 8px; }
+
+        footer { text-align: center; padding: 20px; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-color); background: #f8fafc; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>كاشف التلاعب المحاسبي</h1>
-    <p class="subtitle">أداة فحص الأرقام والقوائم المالية</p>
+    <header>
+        <h1>كاشف التلاعب المحاسبي</h1>
+        <p>افحص القوائم المالية بنموذج بينيش، وافحص دفتر القيود أو الفواتير بقانون بنفورد. الحسابات تتم داخل متصفحك ولا تُرسل بياناتك لأي جهة.</p>
+        <div class="authors">إعداد وتطوير النظام المحلي المجاني</div>
+    </header>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('benford')">فحص الفواتير (بنفورد)</button>
-        <button class="tab-btn" onclick="switchTab('beneish')">نموذج بينيش (M-Score)</button>
-    </div>
+    <nav class="tabs-nav">
+        <button class="tab-btn active" onclick="openTab('beneish-tab')">📊 نموذج بينيش (القوائم المالية)</button>
+        <button class="tab-btn" onclick="openTab('benford-tab')">🔢 قانون بنفورد (القيود والفواتير)</button>
+    </nav>
 
-    <!-- قسم بنفورد -->
-    <div id="benford" class="tab-content active">
-        <h3>الصق قائمة الأرقام أو الفواتير:</h3>
-        <textarea id="benfordInput" placeholder="مثال:&#10;1500&#10;2300&#10;1050&#10;450"></textarea>
-        <button class="action-btn" onclick="runBenford()">فحص الأرقام الآن</button>
-        
-        <div class="result-box">
-            <canvas id="benfordChart"></canvas>
-            <p id="benfordStatus" style="text-align:center; font-weight:bold; margin-top:15px;"></p>
+    <!-- TAB 1: BENEISH MODEL -->
+    <div id="beneish-tab" class="tab-content active">
+        <div class="grid-layout">
+            <div class="card">
+                <div class="card-title">بيانات القوائم المالية</div>
+                <div class="card-desc">أدخل الأرقام بوحدة موحدة للسنتين (السنة الحالية والسنة السابقة).</div>
+
+                <div class="input-group">
+                    <label>المبيعات / الإيرادات</label>
+                    <div class="inputs-row">
+                        <input type="number" id="s_t" placeholder="الحالية (t)" value="1500">
+                        <input type="number" id="s_t1" placeholder="السبقة (t-1)" value="1200">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>تكلفة المبيعات (COGS)</label>
+                    <div class="inputs-row">
+                        <input type="number" id="cogs_t" placeholder="الحالية (t)" value="900">
+                        <input type="number" id="cogs_t1" placeholder="السبقة (t-1)" value="750">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>الحسابات المدينة (المدينون)</label>
+                    <div class="inputs-row">
+                        <input type="number" id="rec_t" placeholder="الحالية (t)" value="300">
+                        <input type="number" id="rec_t1" placeholder="السبقة (t-1)" value="200">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>الأصول المتداولة</label>
+                    <div class="inputs-row">
+                        <input type="number" id="ca_t" placeholder="الحالية (t)" value="600">
+                        <input type="number" id="ca_t1" placeholder="السبقة (t-1)" value="500">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>إجمالي الأصول</label>
+                    <div class="inputs-row">
+                        <input type="number" id="ta_t" placeholder="الحالية (t)" value="2000">
+                        <input type="number" id="ta_t1" placeholder="السبقة (t-1)" value="1800">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>العقارات والآلات والمعدات (PPE)</label>
+                    <div class="inputs-row">
+                        <input type="number" id="ppe_t" placeholder="الحالية (t)" value="1100">
+                        <input type="number" id="ppe_t1" placeholder="السبقة (t-1)" value="1000">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>الاستهلاك / الإطفاء</label>
+                    <div class="inputs-row">
+                        <input type="number" id="dep_t" placeholder="الحالية (t)" value="100">
+                        <input type="number" id="dep_t1" placeholder="السبقة (t-1)" value="90">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>المصاريف البيعية والعمومية (SGA)</label>
+                    <div class="inputs-row">
+                        <input type="number" id="sga_t" placeholder="الحالية (t)" value="200">
+                        <input type="number" id="sga_t1" placeholder="السبقة (t-1)" value="180">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>صافي الدخل المستمر</label>
+                    <div class="inputs-row">
+                        <input type="number" id="ni_t" placeholder="الحالية (t)" value="250">
+                        <input type="number" id="ni_t1" placeholder="السبقة (t-1)" value="200">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>التدفق النقدي التشغيلي (CFO)</label>
+                    <div class="inputs-row">
+                        <input type="number" id="cfo_t" placeholder="الحالية (t)" value="220">
+                        <input type="number" id="cfo_t1" placeholder="السبقة (t-1)" value="190">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>إجمالي الالتزامات</label>
+                    <div class="inputs-row">
+                        <input type="number" id="lt_t" placeholder="الحالية (t)" value="800">
+                        <input type="number" id="lt_t1" placeholder="السبقة (t-1)" value="750">
+                    </div>
+                </div>
+
+                <button class="btn-action" onclick="calculateBeneish()">فحص القوائم بنموذج بينيش</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">نتيجة نموذج بينيش</div>
+                <div id="beneishResultContainer">
+                    <div class="result-box normal">
+                        <div>درجة M المحسوبة:</div>
+                        <div class="score-val" id="mScoreVal">-2.15</div>
+                        <div id="mScoreStatus">بيانات تجريبية: القوائم تبدو في النطاق الطبيعي ولا تشير لتلاعب ملحوظ.</div>
+                    </div>
+                </div>
+
+                <details>
+                    <summary>كيف تُحسب الدرجة وما حدودها؟</summary>
+                    <ul>
+                        <li><b>المعادلة:</b> M = -4.84 + 0.920·DSRI + 0.528·GMI + 0.404·AQI + 0.892·SGI + 0.115·DEPI - 0.172·SGAI + 4.679·TATA - 0.327·LVGI</li>
+                        <li><b>حد التنبيه:</b> إذا كانت درجة M <b>أكبر من -1.78</b> (أو -2.22 بالمعيار التحفظي)، فهذا مؤشر قوي على وجود احتمال للتلاعب بالأرباح والقوائم المالية.</li>
+                        <li>كل مؤشر يقارن السنة الحالية بالسنة السابقة.</li>
+                    </ul>
+                </details>
+            </div>
         </div>
     </div>
 
-    <!-- قسم بينيش -->
-    <div id="beneish" class="tab-content">
-        <h3>تجربة نموذج بينيش المالي:</h3>
-        <p>هذا القسم يحسب مؤشر M-Score لمعرفة احتمالية التلاعب بالأرباح.</p>
-        <button class="action-btn" onclick="runBeneishDemo()">تشغيل تجربة افتراضية</button>
-        <div class="result-box" id="beneishResult" style="display:none;"></div>
+    <!-- TAB 2: BENFORD'S LAW -->
+    <div id="benford-tab" class="tab-content">
+        <div class="grid-layout">
+            <div class="card">
+                <div class="card-title">الأرقام المراد فحصها</div>
+                <div class="card-desc">الصق عموداً من الأرقام: فواتير، قيود، مدفوعات، أو أرصدة. (العدد المثالي 300+ رقم).</div>
+
+                <label class="file-upload-btn">
+                    📂 رفع ملف نصي أو CSV
+                    <input type="file" id="fileInput" accept=".csv, .txt" onchange="handleFileUpload(event)">
+                </label>
+
+                <textarea id="benfordInput" placeholder="الصق الأرقام هنا... مثل:&#10;1450&#10;2300&#10;1050&#10;890&#10;4500&#10;1200"></textarea>
+
+                <button class="btn-action" onclick="analyzeBenford()">تحليل البيانات ببيان بنفورد</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">مخطط التوزيع المقارن</div>
+                <canvas id="benfordChart" style="max-height: 280px;"></canvas>
+                <div id="benfordSummary" style="margin-top:15px; text-align:center; font-weight:600; font-size:0.9rem;"></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:25px;">
+            <div class="card-title">تفصيل الخانة الأولى واختبار MAD</div>
+            <div style="overflow-x:auto;">
+                <table id="detailsTable">
+                    <thead>
+                        <tr>
+                            <th>الرقم الأول</th>
+                            <th>التكرار</th>
+                            <th>النسبة الفعلية (%)</th>
+                            <th>نسبة بنفورد المتوقعة (%)</th>
+                            <th>الانحراف المطلق</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5">قم بتحليل الأرقام أولاً لعرض الجدول.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <details>
+                <summary>كيف تُقرأ النتيجة؟ (مؤشر MAD)</summary>
+                <ul>
+                    <li>في البيانات الطبيعية، يبدأ حوالي <b>30.1%</b> من الأرقام بالرقم <b>1</b>، بينما يبدأ حوالي <b>4.6%</b> فقط بالرقم <b>9</b>.</li>
+                    <li><b>مؤشر MAD (متوسط الفرق المطلق):</b>
+                        <ul>
+                            <li>أقل من 0.006: مطابقة وثيقة جداً.</li>
+                            <li>0.006 - 0.012: مطابقة مقبولة.</li>
+                            <li>0.012 - 0.015: حدية (تستدعي الانتباه).</li>
+                            <li>أكبر من 0.015: غير مطابقة (تستوجب المراجعة).</li>
+                        </ul>
+                    </li>
+                </ul>
+            </details>
+        </div>
     </div>
+
+    <footer>
+        <p>الأدوات هنا للإنذار المبكر. النتيجة المرتفعة تعني أن البيانات تستحق مراجعة أعمق للمستندات، ولا تثبت وقوع تلاعب بشكل قطعي.</p>
+        <p>المراجع: Beneish (1999) The Detection of Earnings Manipulation · Nigrini (2012) Benford's Law.</p>
+    </footer>
 </div>
 
 <script>
-    function switchTab(tabName) {
+    // Tab Switching
+    function openTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabName).classList.add('active');
-        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
     }
 
+    // Beneish Calculator Logic
+    function calculateBeneish() {
+        const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+        const s_t = getVal('s_t'), s_t1 = getVal('s_t1');
+        const cogs_t = getVal('cogs_t'), cogs_t1 = getVal('cogs_t1');
+        const rec_t = getVal('rec_t'), rec_t1 = getVal('rec_t1');
+        const ca_t = getVal('ca_t'), ca_t1 = getVal('ca_t1');
+        const ta_t = getVal('ta_t'), ta_t1 = getVal('ta_t1');
+        const ppe_t = getVal('ppe_t'), ppe_t1 = getVal('ppe_t1');
+        const dep_t = getVal('dep_t'), dep_t1 = getVal('dep_t1');
+        const sga_t = getVal('sga_t'), sga_t1 = getVal('sga_t1');
+        const ni_t = getVal('ni_t');
+        const cfo_t = getVal('cfo_t');
+        const lt_t = getVal('lt_t'), lt_t1 = getVal('lt_t1');
+
+        // Indicators Calculation
+        const dsri = (rec_t / s_t) / (rec_t1 / s_t1 || 1);
+        const gmi = ((s_t1 - cogs_t1) / s_t1) / ((s_t - cogs_t) / s_t || 1);
+        const aqi = (1 - (ca_t + ppe_t) / ta_t) / (1 - (ca_t1 + ppe_t1) / ta_t1 || 1);
+        const sgi = s_t / (s_t1 || 1);
+        const depi = (dep_t1 / (ppe_t1 + dep_t1)) / (dep_t / (ppe_t + dep_t) || 1);
+        const sgai = (sga_t / s_t) / (sga_t1 / s_t1 || 1);
+        const lvgi = (lt_t / ta_t) / (lt_t1 / ta_t1 || 1);
+        const tata = (ni_t - cfo_t) / ta_t;
+
+        const mScore = -4.84 + (0.920 * dsri) + (0.528 * gmi) + (0.404 * aqi) + (0.892 * sgi) + (0.115 * depi) - (0.172 * sgai) + (4.679 * tata) - (0.327 * lvgi);
+
+        const container = document.getElementById('beneishResultContainer');
+        const formattedScore = mScore.toFixed(2);
+
+        if (mScore > -1.78) {
+            container.innerHTML = `
+                <div class="result-box warning">
+                    <div>درجة M المحسوبة:</div>
+                    <div class="score-val" style="color:var(--danger)">${formattedScore}</div>
+                    <div><b>تنبيه مرتفع!</b> الدرجة أكبر من -1.78، مما يشير لاحتمال جلي للتلاعب بالأرباح والقوائم المالية.</div>
+                </div>`;
+        } else {
+            container.innerHTML = `
+                <div class="result-box normal">
+                    <div>درجة M المحسوبة:</div>
+                    <div class="score-val" style="color:var(--success)">${formattedScore}</div>
+                    <div><b>طبيعي:</b> الدرجة ضمن الحد الآمن (أقل من -1.78)، ولا تشير لتلاعب ظاهر بالأرباح.</div>
+                </div>`;
+        }
+    }
+
+    // Benford Analysis Logic
     let chartInstance = null;
-    function runBenford() {
-        const text = document.getElementById('benfordInput').value;
-        const numbers = text.match(/\d+/g);
-        if (!numbers) { alert("من فضلك أدخل أرقاماً أولاً!"); return; }
+    const benfordExpectedProportions = [0.301, 0.176, 0.125, 0.097, 0.079, 0.067, 0.058, 0.051, 0.046];
 
-        let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0};
-        let total = 0;
+    function analyzeBenford() {
+        const input = document.getElementById('benfordInput').value;
+        const numbers = input.match(/\d+(\.\d+)?/g);
 
-        numbers.forEach(num => {
-            let firstDigit = num.replace(/^0+/, '')[0];
-            if (firstDigit >= '1' && firstDigit <= '9') {
-                counts[firstDigit]++;
-                total++;
+        if (!numbers || numbers.length === 0) {
+            alert('يرجى إدخال أرقام صالحة أولاً.');
+            return;
+        }
+
+        let counts = Array(10).fill(0);
+        let totalValid = 0;
+
+        numbers.forEach(numStr => {
+            let clean = numStr.replace(/^0+/, '').replace('.', '');
+            if (clean.length > 0) {
+                let firstDigit = parseInt(clean[0]);
+                if (firstDigit >= 1 && firstDigit <= 9) {
+                    counts[firstDigit]++;
+                    totalValid++;
+                }
             }
         });
 
-        const actual = Object.keys(counts).map(d => ((counts[d] / total) * 100).toFixed(1));
-        const expected = [30.1, 17.6, 12.5, 9.7, 7.9, 6.7, 5.8, 5.1, 4.6];
+        if (totalValid === 0) {
+            alert('لم يتم العثور على أرقام تبدأ بالخانات من 1 إلى 9.');
+            return;
+        }
 
+        let actualPct = [];
+        let expectedPct = benfordExpectedProportions.map(p => (p * 100).toFixed(1));
+        let sumAbsoluteDiff = 0;
+
+        let tableRowsHTML = '';
+
+        for (let d = 1; d <= 9; d++) {
+            let count = counts[d];
+            let actualProp = count / totalValid;
+            let actualPercentage = (actualProp * 100).toFixed(1);
+            actualPct.push(actualPercentage);
+
+            let expectedProp = benfordExpectedProportions[d - 1];
+            let diff = Math.abs(actualProp - expectedProp);
+            sumAbsoluteDiff += diff;
+
+            tableRowsHTML += `
+                <tr>
+                    <td><b>${d}</b></td>
+                    <td>${count}</td>
+                    <td>${actualPercentage}%</td>
+                    <td>${(expectedProp * 100).toFixed(1)}%</td>
+                    <td>${(diff * 100).toFixed(2)}%</td>
+                </tr>`;
+        }
+
+        document.querySelector('#detailsTable tbody').innerHTML = tableRowsHTML;
+
+        // Calculate MAD
+        let mad = sumAbsoluteDiff / 9;
+        let madStatus = '';
+        if (mad < 0.006) madStatus = 'مطابقة وثيقة جداً (طبيعية)';
+        else if (mad <= 0.012) madStatus = 'مطابقة مقبولة';
+        else if (mad <= 0.015) madStatus = 'مطابقة حدية (تستدعي الانتباه)';
+        else madStatus = 'غير مطابقة (توجد انحرافات ملحوظة)';
+
+        document.getElementById('benfordSummary').innerHTML = `
+            إجمالي الأرقام المفحوصة: <b>${totalValid}</b> | مؤشر MAD: <b>${mad.toFixed(4)}</b> <br>
+            <span style="color: ${mad > 0.012 ? 'var(--danger)' : 'var(--success)'}">الحالة: ${madStatus}</span>`;
+
+        renderChart(actualPct, expectedPct);
+    }
+
+    function renderChart(actual, expected) {
         const ctx = document.getElementById('benfordChart').getContext('2d');
         if (chartInstance) chartInstance.destroy();
 
@@ -89,20 +407,46 @@
             data: {
                 labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
                 datasets: [
-                    { label: 'الأرقام المدخلة (%)', data: actual, backgroundColor: '#2563eb' },
-                    { label: 'توزيع بنفورد الطبيعي (%)', data: expected, type: 'line', borderColor: '#ef4444' }
+                    {
+                        label: 'التوزيع الفعلّي (%)',
+                        data: actual,
+                        backgroundColor: '#1e3a8a',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'قانون بنفورد المتوقع (%)',
+                        data: expected,
+                        type: 'line',
+                        borderColor: '#dc2626',
+                        borderWidth: 2,
+                        fill: false
+                    }
                 ]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } },
+                scales: { y: { beginAtZero: true } }
             }
         });
-
-        document.getElementById('benfordStatus').innerText = "تم تحليل " + total + " رقم بنجاح!";
     }
 
-    function runBeneishDemo() {
-        const result = document.getElementById('beneishResult');
-        result.style.display = 'block';
-        result.innerHTML = '<b>نتيجة الفحص الافتراضي:</b><br>درجة M-Score الحالية هي <b>-2.45</b> (طبيعية وتدل على عدم وجود تلاعب ظاهري).';
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('benfordInput').value = e.target.result;
+            analyzeBenford();
+        };
+        reader.readAsText(file);
     }
+
+    // Auto-initialize on load
+    window.onload = function() {
+        calculateBeneish();
+    };
 </script>
 </body>
 </html>
