@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كاشف التلاعب المحاسبي</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h1 { text-align: center; color: #1e293b; }
+        p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; }
+        .tab-btn.active { background: #2563eb; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        textarea { width: 100%; height: 120px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        button.action-btn { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button.action-btn:hover { background: #059669; }
+        .result-box { margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>كاشف التلاعب المحاسبي</h1>
+    <p class="subtitle">أداة فحص الأرقام والقوائم المالية</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('benford')">فحص الفواتير (بنفورد)</button>
+        <button class="tab-btn" onclick="switchTab('beneish')">نموذج بينيش (M-Score)</button>
+    </div>
+
+    <!-- قسم بنفورد -->
+    <div id="benford" class="tab-content active">
+        <h3>الصق قائمة الأرقام أو الفواتير:</h3>
+        <textarea id="benfordInput" placeholder="مثال:&#10;1500&#10;2300&#10;1050&#10;450"></textarea>
+        <button class="action-btn" onclick="runBenford()">فحص الأرقام الآن</button>
+        
+        <div class="result-box">
+            <canvas id="benfordChart"></canvas>
+            <p id="benfordStatus" style="text-align:center; font-weight:bold; margin-top:15px;"></p>
+        </div>
+    </div>
+
+    <!-- قسم بينيش -->
+    <div id="beneish" class="tab-content">
+        <h3>تجربة نموذج بينيش المالي:</h3>
+        <p>هذا القسم يحسب مؤشر M-Score لمعرفة احتمالية التلاعب بالأرباح.</p>
+        <button class="action-btn" onclick="runBeneishDemo()">تشغيل تجربة افتراضية</button>
+        <div class="result-box" id="beneishResult" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    let chartInstance = null;
+    function runBenford() {
+        const text = document.getElementById('benfordInput').value;
+        const numbers = text.match(/\d+/g);
+        if (!numbers) { alert("من فضلك أدخل أرقاماً أولاً!"); return; }
+
+        let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0};
+        let total = 0;
+
+        numbers.forEach(num => {
+            let firstDigit = num.replace(/^0+/, '')[0];
+            if (firstDigit >= '1' && firstDigit <= '9') {
+                counts[firstDigit]++;
+                total++;
+            }
+        });
+
+        const actual = Object.keys(counts).map(d => ((counts[d] / total) * 100).toFixed(1));
+        const expected = [30.1, 17.6, 12.5, 9.7, 7.9, 6.7, 5.8, 5.1, 4.6];
+
+        const ctx = document.getElementById('benfordChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                datasets: [
+                    { label: 'الأرقام المدخلة (%)', data: actual, backgroundColor: '#2563eb' },
+                    { label: 'توزيع بنفورد الطبيعي (%)', data: expected, type: 'line', borderColor: '#ef4444' }
+                ]
+            }
+        });
+
+        document.getElementById('benfordStatus').innerText = "تم تحليل " + total + " رقم بنجاح!";
+    }
+
+    function runBeneishDemo() {
+        const result = document.getElementById('beneishResult');
+        result.style.display = 'block';
+        result.innerHTML = '<b>نتيجة الفحص الافتراضي:</b><br>درجة M-Score الحالية هي <b>-2.45</b> (طبيعية وتدل على عدم وجود تلاعب ظاهري).';
+    }
+</script>
+</body>
+</html>
